@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bouk/monkey"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bouk/monkey"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
 
@@ -581,7 +581,7 @@ func TestChangeUserTimeZone(t *testing.T) {
 	_, err = bot.JoinStandupers(update)
 	assert.NoError(t, err)
 
-	text, err := bot.ChangeUserTimeZone(update)
+	_, text, err := bot.ChangeUserTimeZone(update)
 	assert.NoError(t, err)
 	assert.Equal(t, "your timezone is updated, new TZ is Asia/Bishkek", text)
 
@@ -613,7 +613,7 @@ func TestChangeUserTimeZone(t *testing.T) {
 		},
 	}
 
-	text, err = bot.ChangeUserTimeZone(update)
+	_, text, err = bot.ChangeUserTimeZone(update)
 	assert.NoError(t, err)
 	assert.Equal(t, "your timezone is updated, new TZ is Asia/Tashkent", text)
 
@@ -645,7 +645,7 @@ func TestChangeUserTimeZone(t *testing.T) {
 		},
 	}
 
-	text, err = bot.ChangeUserTimeZone(update)
+	_, text, err = bot.ChangeUserTimeZone(update)
 	assert.NoError(t, err)
 	assert.Equal(t, "Failed to recognize new TZ you entered, double check the tz name and try again", text)
 
@@ -674,7 +674,60 @@ func TestChangeUserTimeZone(t *testing.T) {
 		},
 	}
 
-	text, err = bot.ChangeUserTimeZone(update)
+	_, text, err = bot.ChangeUserTimeZone(update)
 	assert.NoError(t, err)
 	assert.Equal(t, "You do not standup yet", text)
+
+	_, err = bundle.LoadMessageFile("../active.ru.toml")
+	require.NoError(t, err)
+	_, err = bundle.LoadMessageFile("../active.en.toml")
+	require.NoError(t, err)
+
+	g := &model.Group{
+		ChatID:   int64(15),
+		Language: "en",
+	}
+
+	group, err := db.CreateGroup(g)
+	require.NoError(t, err)
+
+	update = tgbotapi.Update{
+		Message: &tgbotapi.Message{
+			From: &tgbotapi.User{
+				ID: 1,
+			},
+			Chat: &tgbotapi.Chat{
+				ID: group.ChatID,
+			},
+		},
+	}
+
+	lang, text, err := bot.ChangeUserTimeZone(update)
+	require.NoError(t, err)
+	assert.Equal(t, "en", lang)
+	assert.Equal(t, "You do not standup yet", text)
+
+	g = &model.Group{
+		ChatID:   int64(16),
+		Language: "ru",
+	}
+
+	group, err = db.CreateGroup(g)
+	require.NoError(t, err)
+
+	update = tgbotapi.Update{
+		Message: &tgbotapi.Message{
+			From: &tgbotapi.User{
+				ID: 1,
+			},
+			Chat: &tgbotapi.Chat{
+				ID: group.ChatID,
+			},
+		},
+	}
+
+	lang, text, err = bot.ChangeUserTimeZone(update)
+	require.NoError(t, err)
+	assert.Equal(t, "ru", lang)
+	assert.Equal(t, "Вы еще не стендапите", text)
 }
