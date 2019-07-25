@@ -554,6 +554,8 @@ func TestChangeUserTimeZone(t *testing.T) {
 	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 	_, err = bundle.LoadMessageFile("../active.en.toml")
 	require.NoError(t, err)
+	_, err = bundle.LoadMessageFile("../active.ru.toml")
+	require.NoError(t, err)
 
 	db, err := storage.NewMySQL(conf)
 	require.NoError(t, err)
@@ -581,7 +583,7 @@ func TestChangeUserTimeZone(t *testing.T) {
 	_, err = bot.JoinStandupers(update)
 	assert.NoError(t, err)
 
-	_, text, err := bot.ChangeUserTimeZone(update)
+	text, err := bot.ChangeUserTimeZone(update)
 	assert.NoError(t, err)
 	assert.Equal(t, "your timezone is updated, new TZ is Asia/Bishkek", text)
 
@@ -613,7 +615,7 @@ func TestChangeUserTimeZone(t *testing.T) {
 		},
 	}
 
-	_, text, err = bot.ChangeUserTimeZone(update)
+	text, err = bot.ChangeUserTimeZone(update)
 	assert.NoError(t, err)
 	assert.Equal(t, "your timezone is updated, new TZ is Asia/Tashkent", text)
 
@@ -645,7 +647,7 @@ func TestChangeUserTimeZone(t *testing.T) {
 		},
 	}
 
-	_, text, err = bot.ChangeUserTimeZone(update)
+	text, err = bot.ChangeUserTimeZone(update)
 	assert.NoError(t, err)
 	assert.Equal(t, "Failed to recognize new TZ you entered, double check the tz name and try again", text)
 
@@ -674,14 +676,9 @@ func TestChangeUserTimeZone(t *testing.T) {
 		},
 	}
 
-	_, text, err = bot.ChangeUserTimeZone(update)
+	text, err = bot.ChangeUserTimeZone(update)
 	assert.NoError(t, err)
 	assert.Equal(t, "You do not standup yet", text)
-
-	_, err = bundle.LoadMessageFile("../active.ru.toml")
-	require.NoError(t, err)
-	_, err = bundle.LoadMessageFile("../active.en.toml")
-	require.NoError(t, err)
 
 	g := &model.Group{
 		ChatID:   int64(15),
@@ -702,9 +699,8 @@ func TestChangeUserTimeZone(t *testing.T) {
 		},
 	}
 
-	lang, text, err := bot.ChangeUserTimeZone(update)
+	text, err = bot.ChangeUserTimeZone(update)
 	require.NoError(t, err)
-	assert.Equal(t, "en", lang)
 	assert.Equal(t, "You do not standup yet", text)
 
 	g = &model.Group{
@@ -726,8 +722,7 @@ func TestChangeUserTimeZone(t *testing.T) {
 		},
 	}
 
-	lang, text, err = bot.ChangeUserTimeZone(update)
+	text, err = bot.ChangeUserTimeZone(update)
 	require.NoError(t, err)
-	assert.Equal(t, "ru", lang)
 	assert.Equal(t, "Вы еще не стендапите", text)
 }
