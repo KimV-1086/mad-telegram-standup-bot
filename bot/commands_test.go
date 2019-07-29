@@ -726,3 +726,78 @@ func TestChangeUserTimeZone(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Вы еще не стендапите", text)
 }
+
+func TestLeaveStandupers(t *testing.T) {
+	Test = true
+	conf, err := config.Get()
+	require.NoError(t, err)
+	bundle := i18n.NewBundle(language.English)
+	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
+	_, err = bundle.LoadMessageFile("../active.en.toml")
+	require.NoError(t, err)
+	_, err = bundle.LoadMessageFile("../active.ru.toml")
+	require.NoError(t, err)
+
+	db, err := storage.NewMySQL(conf)
+	require.NoError(t, err)
+
+	bot := Bot{c: conf, db: db, bundle: bundle}
+
+	g := &model.Group{
+		ChatID:   int64(17),
+		Language: "en",
+	}
+
+	group, err := db.CreateGroup(g)
+	require.NoError(t, err)
+
+	team := &model.Team{
+		Group:    group,
+		QuitChan: make(chan struct{}),
+	}
+	bot.teams = append(bot.teams, team)
+
+	update := tgbotapi.Update{
+		Message: &tgbotapi.Message{
+			From: &tgbotapi.User{
+				ID: 2,
+			},
+			Chat: &tgbotapi.Chat{
+				ID: group.ChatID,
+			},
+		},
+	}
+
+	text, err := bot.LeaveStandupers(update)
+	require.NoError(t, err)
+	assert.Equal(t, "You do not standup yet", text)
+
+	g = &model.Group{
+		ChatID:   int64(18),
+		Language: "ru",
+	}
+
+	group, err = db.CreateGroup(g)
+	require.NoError(t, err)
+
+	team = &model.Team{
+		Group:    group,
+		QuitChan: make(chan struct{}),
+	}
+	bot.teams = append(bot.teams, team)
+
+	update = tgbotapi.Update{
+		Message: &tgbotapi.Message{
+			From: &tgbotapi.User{
+				ID: 3,
+			},
+			Chat: &tgbotapi.Chat{
+				ID: group.ChatID,
+			},
+		},
+	}
+
+	text, err = bot.LeaveStandupers(update)
+	require.NoError(t, err)
+	assert.Equal(t, "Вы еще не стендапите", text)
+}
