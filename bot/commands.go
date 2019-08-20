@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"golang.org/x/sys/windows/svc/eventlog"
 	"fmt"
 	"strings"
 	"time"
@@ -176,6 +177,13 @@ func (b *Bot) JoinStandupers(event tgbotapi.Update) (string, error) {
 	})
 }
 
+func (b *Bot) DeleteStUp(event tgbotapi.Update)(string,error){
+	stUp,err := b.db.ListStandups(event.Message.Chat.ID)
+	if err != nil{
+		return "",err
+	}
+	
+}
 //Show standupers
 func (b *Bot) Show(event tgbotapi.Update) (string, error) {
 
